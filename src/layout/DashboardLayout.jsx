@@ -3,11 +3,35 @@ const navItems = [
   { id: "users", label: "Users", icon: "◉" },
   { id: "predictions", label: "Predictions", icon: "◎" },
   { id: "map", label: "Map Insights", icon: "◫" },
-  { id: "reports", label: "Reports", icon: "◧" },
-  { id: "settings", label: "Settings", icon: "◐" },
+  { id: "reports", label: "Reports", icon: "◧" }
 ];
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function DashboardLayout({ children, activePage = "users", onNavigate }) {
+  const handleLogout = async (event) => {
+    event.preventDefault();
+
+    const token = localStorage.getItem("token");
+
+    try {
+      if (token) {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn("Logout request failed", error?.message || error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/";
+    }
+  };
+
   return (
     <div style={{
       display: "flex", width: "100%", minHeight: "100vh", height: "100dvh",
@@ -82,7 +106,7 @@ export default function DashboardLayout({ children, activePage = "users", onNavi
           </div>
           <div style={{ display: "flex", gap: 14 }}>
             <a href="#" style={{ fontSize: 11, color: "#9b6e6e", textDecoration: "none" }}>View Site</a>
-            <a href="#" style={{ fontSize: 11, color: "#f87171", textDecoration: "none" }}>Logout</a>
+            <a href="/api/auth/logout" onClick={handleLogout} style={{ fontSize: 11, color: "#f87171", textDecoration: "none" }}>Logout</a>
           </div>
         </div>
       </aside>

@@ -1,15 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
-const allUsers = [
-  { id: 1, initials: "JD", name: "John Doe",      email: "john.doe@email.com",      status: "active",    joinDate: "Jan 15, 2024", predictions: 23, premium: true  },
-  { id: 2, initials: "JS", name: "Jane Smith",     email: "jane.smith@email.com",    status: "inactive",  joinDate: "Dec 8, 2023",  predictions: 7,  premium: false },
-  { id: 3, initials: "MB", name: "Michael Brown",  email: "michael.brown@email.com", status: "suspended", joinDate: "Nov 22, 2023", predictions: 45, premium: true  },
-  { id: 4, initials: "SW", name: "Sarah Wilson",   email: "sarah.wilson@email.com",  status: "active",    joinDate: "Feb 3, 2024",  predictions: 12, premium: false },
-  { id: 5, initials: "DL", name: "David Lee",      email: "david.lee@email.com",     status: "active",    joinDate: "Jan 28, 2024", predictions: 8,  premium: true  },
-  { id: 6, initials: "AP", name: "Ava Perera",     email: "ava.perera@email.com",    status: "active",    joinDate: "Mar 1, 2024",  predictions: 31, premium: true  },
-  { id: 7, initials: "RK", name: "Rajan Kumar",    email: "rajan.kumar@email.com",   status: "inactive",  joinDate: "Oct 10, 2023", predictions: 3,  premium: false },
-  { id: 8, initials: "LM", name: "Laura Mendez",   email: "laura.m@email.com",       status: "active",    joinDate: "Feb 20, 2024", predictions: 19, premium: false },
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const STATUS = {
   active:    { bg: "#dcfce7", color: "#166534", dot: "#16a34a" },
@@ -25,10 +16,51 @@ const AVATAR_COLORS = {
   suspended: "#64748b",
 };
 
-export default function UsersPage() {
+export default function UsersPage({ onAddUser }) {
   const [search, setSearch]   = useState("");
   const [filter, setFilter]   = useState("All");
-  const [users,  setUsers]    = useState(allUsers);
+  const [users,  setUsers]    = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState("");
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/api/users`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || `HTTP Error: ${res.status}`);
+        }
+
+        setUsers(data.data || []);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setError(err.message || "Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const filtered = useMemo(() => users.filter(u => {
     const q = search.toLowerCase();
@@ -45,10 +77,10 @@ export default function UsersPage() {
   ));
 
   const stats = [
-    { label: "Total Users",  value: 97,    sub: "+12% this month", bar: 72, barColor: "#b91c1c" },
-    { label: "Active",       value: 61,    sub: "63% of total",    bar: 63, barColor: "#16a34a" },
-    { label: "Premium",      value: 38,    sub: "39% conversion",  bar: 39, barColor: "#d97706" },
-    { label: "Suspended",    value: 8,     sub: "8% of total",     bar: 8,  barColor: "#dc2626" },
+    { label: "Total Users",  value: users.length,    sub: "+12% this month", bar: Math.min(users.length, 100), barColor: "#b91c1c" },
+    { label: "Active",       value: users.filter(u => u.status === "active").length,    sub: "active users",    bar: Math.min(users.filter(u => u.status === "active").length, 100), barColor: "#16a34a" },
+    { label: "Premium",      value: users.filter(u => u.premium).length,    sub: "premium users",  bar: Math.min(users.filter(u => u.premium).length, 100), barColor: "#d97706" },
+    { label: "Suspended",    value: users.filter(u => u.status === "suspended").length,     sub: "suspended",     bar: Math.min(users.filter(u => u.status === "suspended").length, 100),  barColor: "#dc2626" },
   ];
 
   return (
@@ -77,10 +109,13 @@ export default function UsersPage() {
               }}
             />
           </div>
-          <button style={{
-            background: "#b91c1c", color: "#fff", border: "none", borderRadius: 8,
-            padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-          }}>+ Add User</button>
+          <button
+            onClick={onAddUser}
+            style={{
+              background: "#b91c1c", color: "#fff", border: "none", borderRadius: 8,
+              padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+            }}
+          >+ Add User</button>
         </div>
       </div>
 
@@ -117,10 +152,25 @@ export default function UsersPage() {
             >{f}</button>
           ))}
           <div style={{ flex: 1 }} />
-          <span style={{ fontSize: 12, color: "#9b8888" }}>{filtered.length} of 97 users</span>
+          <span style={{ fontSize: 12, color: "#9b8888" }}>{filtered.length} of {users.length} users</span>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div style={{ margin: "0 24px 24px", padding: "12px 16px", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 12, color: "#b91c1c", fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div style={{ margin: "0 24px 24px", padding: "40px 24px", textAlign: "center", color: "#9b8888" }}>
+            <p style={{ fontSize: 13 }}>Loading users...</p>
+          </div>
+        )}
+
         {/* Table */}
+        {!loading && !error && (
         <div style={{ margin: "0 24px 24px", background: "#fff", border: "1px solid #e8e2e2", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 700 }}>
@@ -220,7 +270,7 @@ export default function UsersPage() {
             padding: "13px 16px", display: "flex", justifyContent: "space-between",
             alignItems: "center", borderTop: "1px solid #e8e2e2",
           }}>
-            <span style={{ fontSize: 12, color: "#9b8888" }}>Showing 1–{filtered.length} of 97 results</span>
+            <span style={{ fontSize: 12, color: "#9b8888" }}>Showing 1–{filtered.length} of {users.length} results</span>
             <div style={{ display: "flex", gap: 4 }}>
               {["← Prev", "1", "2", "3", "Next →"].map((p, i) => (
                 <button key={i} style={{
@@ -235,6 +285,7 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+        )}
 
       </div>{/* end scrollable */}
     </div>
