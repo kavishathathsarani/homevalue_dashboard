@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 const STATUS = {
   active:    { bg: "#dcfce7", color: "#166534", dot: "#16a34a" },

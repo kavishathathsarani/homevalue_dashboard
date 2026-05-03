@@ -2,11 +2,10 @@ const navItems = [
   { id: "overview", label: "Overview", icon: "⬡" },
   { id: "users", label: "Users", icon: "◉" },
   { id: "predictions", label: "Predictions", icon: "◎" },
-  { id: "map", label: "Map Insights", icon: "◫" },
   { id: "reports", label: "Reports", icon: "◧" }
 ];
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function DashboardLayout({ children, activePage = "users", onNavigate }) {
   const handleLogout = async (event) => {

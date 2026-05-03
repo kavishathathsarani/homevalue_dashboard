@@ -30,7 +30,6 @@ export default function App() {
       />
     ),
     predictions: <PredictionsPage />,
-    map: <MapInsightsPage />,
     reports: <ReportsPage />,
 
   };
