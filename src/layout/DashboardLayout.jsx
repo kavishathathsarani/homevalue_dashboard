@@ -2,10 +2,12 @@ const navItems = [
   { id: "overview", label: "Overview", icon: "⬡" },
   { id: "users", label: "Users", icon: "◉" },
   { id: "predictions", label: "Predictions", icon: "◎" },
+  { id: "map", label: "Map Insights", icon: "◫" },
   { id: "reports", label: "Reports", icon: "◧" }
 ];
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const APP_BASE_URL = import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
 export default function DashboardLayout({ children, activePage = "users", onNavigate }) {
   const handleLogout = async (event) => {
@@ -27,7 +29,7 @@ export default function DashboardLayout({ children, activePage = "users", onNavi
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/";
+      window.location.href = APP_BASE_URL;
     }
   };
 
@@ -104,7 +106,6 @@ export default function DashboardLayout({ children, activePage = "users", onNavi
             </div>
           </div>
           <div style={{ display: "flex", gap: 14 }}>
-            <a href="#" style={{ fontSize: 11, color: "#9b6e6e", textDecoration: "none" }}>View Site</a>
             <a href="/api/auth/logout" onClick={handleLogout} style={{ fontSize: 11, color: "#f87171", textDecoration: "none" }}>Logout</a>
           </div>
         </div>
